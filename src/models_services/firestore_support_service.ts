@@ -105,7 +105,7 @@ export async function apiSendAdminMessage(
   try {
     const user = authClient.currentUser;
     const finalAdminId = adminId || user?.uid || 'admin';
-    const finalAdminName = adminName || user?.displayName || user?.email || 'Support Desk';
+    const finalAdminName = adminName || user?.displayName || 'Support Desk';
 
     const msgColl = collection(firestoreClient, 'supports', ticketId, 'messages');
     await addDoc(msgColl, {
