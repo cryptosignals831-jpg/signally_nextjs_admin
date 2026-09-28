@@ -27,6 +27,7 @@
     "@next/bundle-analyzer": "^13.4.7",
     "@next/font": "^13.4.7",
     "@stripe/stripe-js": "^1.54.1",
+    "@tabler/icons-react": "^3.48.0",
     "@tanstack/match-sorter-utils": "8.8.4",
     "@tanstack/react-table": "8.9.3",
     "@tanstack/table-core": "8.9.3",

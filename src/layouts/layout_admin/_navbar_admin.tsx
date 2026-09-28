@@ -46,6 +46,14 @@ export function NavbarAdmin({ isOpen }: Props) {
 
         <Divider className='my-3 border-gray-200 dark:border-[#373A40]' />
 
+        <NavbarLink link='/support-desk' title='Support Desk' iconifyData='fluent:chat-help-24-filled' />
+        <NavbarLinkSub link='/support-desk?status=open' title='Open' />
+        <NavbarLinkSub link='/support-desk?status=in_progress' title='In Progress' />
+        <NavbarLinkSub link='/support-desk?status=resolved' title='Resolved' />
+        <NavbarLinkSub link='/support-desk?status=closed' title='Closed' />
+
+        <Divider className='my-3 border-gray-200 dark:border-[#373A40]' />
+
         <NavbarLink link='/announcements' title='Announcements' iconifyData='mdi:announcement-outline' />
         <NavbarLink link='/video-lessons' title='Video Lessons' iconifyData='material-symbols:video-call' />
         <NavbarLink link='/posts' title='Posts' iconifyData='jam:blogger-square' />
