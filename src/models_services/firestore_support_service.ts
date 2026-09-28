@@ -225,10 +225,12 @@ export async function apiCreateAdminTicketForUser(params: {
 
     const messagesRef = collection(firestoreClient, 'supports', docRef.id, 'messages');
     await addDoc(messagesRef, {
+      ticketId: docRef.id,
       senderId: authClient.currentUser?.uid || 'admin',
       senderRole: 'admin',
       senderName: params.adminName || 'Admin Desk',
       text: params.message,
+      isRead: false,
       read: false,
       timestamp: now
     });

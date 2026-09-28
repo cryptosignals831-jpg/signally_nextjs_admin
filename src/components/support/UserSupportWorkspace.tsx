@@ -224,15 +224,17 @@ export default function UserSupportWorkspace({
     }
   };
 
-  // Synthesize display messages: ensure initial inquiry is rendered
+  // Synthesize display messages: ensure initial inquiry is rendered even if subsequent replies exist
   const displayMessages = [...messages];
-  if (displayMessages.length === 0 && activeTicket && activeTicket.message) {
+  if (activeTicket?.message && !messages.some((m) => m.text === activeTicket.message)) {
     const synthetic = new SupportMessageModel();
     synthetic.id = 'init';
-    synthetic.senderRole = 'user';
+    synthetic.ticketId = activeTicket.id;
+    synthetic.senderRole = (activeTicket.lastSender === 'admin' && activeTicket.userId === 'admin') ? 'admin' : 'user';
     synthetic.senderName = activeTicket.name || activeTicket.email || 'Trader';
     synthetic.text = activeTicket.message;
     synthetic.timestamp = activeTicket.timestampCreated || new Date();
+    synthetic.isRead = true;
     displayMessages.unshift(synthetic);
   }
 

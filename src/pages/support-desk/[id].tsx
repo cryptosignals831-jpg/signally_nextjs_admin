@@ -60,19 +60,19 @@ export default function SupportTicketDetailPage() {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Synthesize initial complaint message if messages subcollection is not yet populated
+  // Synthesize initial complaint message if messages subcollection does not include it
   const displayMessages = useMemo(() => {
-    if (messages.length === 0 && ticket?.message) {
+    if (ticket?.message && !messages.some((m) => m.text === ticket.message)) {
       const initialMsg = new SupportMessageModel();
       initialMsg.id = 'initial-complaint';
       initialMsg.ticketId = ticket.id;
       initialMsg.senderId = ticket.userId || 'user';
       initialMsg.senderName = ticket.name || 'Client';
-      initialMsg.senderRole = 'user';
+      initialMsg.senderRole = (ticket.lastSender === 'admin' && ticket.userId === 'admin') ? 'admin' : 'user';
       initialMsg.text = ticket.message;
       initialMsg.timestamp = ticket.timestampCreated || new Date();
       initialMsg.isRead = true;
-      return [initialMsg];
+      return [initialMsg, ...messages];
     }
     return messages;
   }, [messages, ticket]);
