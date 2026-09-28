@@ -35,12 +35,18 @@ export default function SupportDeskPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>(queryStatus);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Sync selected status from URL query if provided
+  // Sync selected status and search query from URL query if provided
   useEffect(() => {
     if (router.query.status) {
       setSelectedStatus(router.query.status as string);
     }
   }, [router.query.status]);
+
+  useEffect(() => {
+    if (router.query.search && typeof router.query.search === 'string') {
+      setSearchQuery(router.query.search);
+    }
+  }, [router.query.search]);
 
   // Real-time listener for all support tickets
   useEffect(() => {

@@ -164,3 +164,79 @@ export async function apiDeleteSupportTicket(ticketId: string): Promise<boolean>
     throw error;
   }
 }
+
+export function streamTicketsForUser(
+  userId: string,
+  email: string | undefined,
+  callback: (supports: SupportModel[]) => void
+): Unsubscribe {
+  const colRef = collection(firestoreClient, 'supports');
+  return onSnapshot(
+    colRef,
+    (snapshot) => {
+      const all = snapshot.docs.map((docSnap) =>
+        SupportModel.fromJson({ ...docSnap.data(), id: docSnap.id })
+      );
+      const filtered = all.filter((ticket) => {
+        const uMatch = Boolean(userId && ticket.userId === userId);
+        const eMatch = Boolean(email && ticket.email && ticket.email.toLowerCase() === email.toLowerCase());
+        return uMatch || eMatch;
+      });
+      filtered.sort((a, b) => {
+        const aTime = a.timestampCreated ? new Date(a.timestampCreated).getTime() : 0;
+        const bTime = b.timestampCreated ? new Date(b.timestampCreated).getTime() : 0;
+        return bTime - aTime;
+      });
+      callback(filtered);
+    },
+    (err) => {
+      console.error('streamTicketsForUser error:', err);
+    }
+  );
+}
+
+export async function apiCreateAdminTicketForUser(params: {
+  userId: string;
+  email: string;
+  name?: string;
+  subject: string;
+  category?: string;
+  message: string;
+  adminName?: string;
+}): Promise<string> {
+  try {
+    const colRef = collection(firestoreClient, 'supports');
+    const now = serverTimestamp();
+    const docRef = await addDoc(colRef, {
+      userId: params.userId,
+      email: params.email,
+      name: params.name || '',
+      subject: params.subject,
+      category: params.category || 'General Inquiry',
+      message: params.message,
+      status: 'in_progress',
+      lastMessage: params.message,
+      lastSender: 'admin',
+      adminUnread: false,
+      userUnread: true,
+      timestampCreated: now,
+      timestampUpdated: now
+    });
+
+    const messagesRef = collection(firestoreClient, 'supports', docRef.id, 'messages');
+    await addDoc(messagesRef, {
+      senderId: authClient.currentUser?.uid || 'admin',
+      senderRole: 'admin',
+      senderName: params.adminName || 'Admin Desk',
+      text: params.message,
+      read: false,
+      timestamp: now
+    });
+
+    return docRef.id;
+  } catch (error) {
+    console.error('apiCreateAdminTicketForUser error:', error);
+    throw error;
+  }
+}
+
