@@ -119,13 +119,22 @@ export async function apiSendAdminMessage(
     });
 
     const ticketRef = doc(firestoreClient, 'supports', ticketId);
-    await updateDoc(ticketRef, {
+    const updateData: Record<string, any> = {
       lastMessage: text,
       lastSender: 'admin',
       adminUnread: false,
       userUnread: true,
       timestampUpdated: serverTimestamp()
-    });
+    };
+
+    try {
+      const ticketSnap = await getDoc(ticketRef);
+      if (ticketSnap.exists() && ticketSnap.data()?.status === 'open') {
+        updateData.status = 'in_progress';
+      }
+    } catch (_) {}
+
+    await updateDoc(ticketRef, updateData);
 
     return true;
   } catch (error) {

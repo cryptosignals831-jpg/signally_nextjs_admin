@@ -56,7 +56,11 @@ export default function SupportDeskPage() {
   const filteredTickets = useMemo(() => {
     return supports.filter((ticket) => {
       // Status filter
-      if (selectedStatus !== 'all') {
+      if (selectedStatus === 'unread') {
+        if (!ticket.adminUnread) {
+          return false;
+        }
+      } else if (selectedStatus !== 'all') {
         const ticketStatus = (ticket.status || 'open').toLowerCase();
         if (ticketStatus !== selectedStatus.toLowerCase()) {
           return false;
@@ -131,9 +135,10 @@ export default function SupportDeskPage() {
                   color='red'
                   variant='filled'
                   size='lg'
-                  className='mt-3 md:mt-0 animate-pulse'
+                  className='mt-3 md:mt-0 animate-pulse cursor-pointer hover:opacity-90'
+                  onClick={() => handleStatusTabChange('unread')}
                   leftSection={<MessageCircle size={16} />}>
-                  {counts.unread} New Message{counts.unread > 1 ? 's' : ''} Awaiting Reply
+                  {counts.unread} New Message{counts.unread > 1 ? 's' : ''} Awaiting Reply (Filter)
                 </Badge>
               )}
             </Box>
@@ -185,6 +190,7 @@ export default function SupportDeskPage() {
                   onChange={handleStatusTabChange}
                   data={[
                     { label: `All (${counts.all})`, value: 'all' },
+                    ...(counts.unread > 0 ? [{ label: `Unread (${counts.unread})`, value: 'unread' }] : []),
                     { label: `Open (${counts.open})`, value: 'open' },
                     { label: `In Progress (${counts.in_progress})`, value: 'in_progress' },
                     { label: `Resolved (${counts.resolved})`, value: 'resolved' },

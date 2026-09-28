@@ -17,7 +17,7 @@ import {
 } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import { useRouter } from 'next/router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Check,
@@ -34,6 +34,7 @@ import Page from '../../components/others/Page';
 import AuthGuard from '../../guards/AuthGuard';
 import Layout from '../../layouts';
 import { SupportMessageModel, SupportModel, SupportStatus } from '../../models/model.support';
+import { useFirestoreStoreAdmin } from '../../models_store/firestore_store_admin';
 import {
   apiMarkSupportReadByAdmin,
   apiSendAdminMessage,
@@ -48,6 +49,8 @@ export default function SupportTicketDetailPage() {
   const { id } = router.query;
   const ticketId = typeof id === 'string' ? id : '';
 
+  const authUser = useFirestoreStoreAdmin((state) => state.authUser);
+
   const [ticket, setTicket] = useState<SupportModel | null>(null);
   const [messages, setMessages] = useState<SupportMessageModel[]>([]);
   const [loadingTicket, setLoadingTicket] = useState(true);
@@ -56,6 +59,23 @@ export default function SupportTicketDetailPage() {
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Synthesize initial complaint message if messages subcollection is not yet populated
+  const displayMessages = useMemo(() => {
+    if (messages.length === 0 && ticket?.message) {
+      const initialMsg = new SupportMessageModel();
+      initialMsg.id = 'initial-complaint';
+      initialMsg.ticketId = ticket.id;
+      initialMsg.senderId = ticket.userId || 'user';
+      initialMsg.senderName = ticket.name || 'Client';
+      initialMsg.senderRole = 'user';
+      initialMsg.text = ticket.message;
+      initialMsg.timestamp = ticket.timestampCreated || new Date();
+      initialMsg.isRead = true;
+      return [initialMsg];
+    }
+    return messages;
+  }, [messages, ticket]);
 
   // Stream single ticket document
   useEffect(() => {
@@ -85,7 +105,7 @@ export default function SupportTicketDetailPage() {
   // Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [displayMessages]);
 
   const handleStatusChange = async (newStatus: string | null) => {
     if (!newStatus || !ticketId) return;
@@ -118,8 +138,11 @@ export default function SupportTicketDetailPage() {
     const text = replyText.trim();
     setReplyText('');
 
+    const adminName = authUser?.username || (authUser?.email ? authUser.email.split('@')[0] : 'Support Desk');
+    const adminId = authUser?.id || undefined;
+
     try {
-      await apiSendAdminMessage(ticketId, text);
+      await apiSendAdminMessage(ticketId, text, adminName, adminId);
       showNotification({
         title: 'Reply Sent',
         message: 'Your message was delivered to the user.',
@@ -405,7 +428,7 @@ export default function SupportTicketDetailPage() {
 
                     {/* Chat Messages Body */}
                     <ScrollArea className='flex-1 p-4 bg-slate-50/50 dark:bg-slate-900/30' offsetScrollbars>
-                      {messages.length === 0 ? (
+                      {displayMessages.length === 0 ? (
                         <Box className='flex flex-col items-center justify-center py-20 text-center'>
                           <ThemeIcon size={44} radius='xl' color='gray' variant='light' mb='sm'>
                             <MessageCircle size={22} />
@@ -419,7 +442,7 @@ export default function SupportTicketDetailPage() {
                         </Box>
                       ) : (
                         <div className='space-y-3'>
-                          {messages.map((msg) => {
+                          {displayMessages.map((msg) => {
                             const isAdmin = msg.senderRole === 'admin';
                             return (
                               <div
