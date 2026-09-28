@@ -24,14 +24,16 @@ export default function SignInPage({ isSuperAdminConfigured }: Props) {
 }
 
 export async function getServerSideProps(context: GetStaticProps) {
+  let isSuperAdminConfigured = true;
   try {
     const appControl = await firestoreAdmin.collection('appControlsPrivate').doc('appControlsPrivate').get();
+    if (appControl.exists) {
+      isSuperAdminConfigured = appControl.data()?.isSuperAdminConfigured ?? true;
+    }
   } catch (error) {
-    console.log(error);
+    console.error('Error fetching appControlsPrivate in signin:', error);
+    isSuperAdminConfigured = true;
   }
-  const appControl = await firestoreAdmin.collection('appControlsPrivate').doc('appControlsPrivate').get();
-
-  const isSuperAdminConfigured = appControl.data()?.isSuperAdminConfigured || false;
 
   return {
     props: {

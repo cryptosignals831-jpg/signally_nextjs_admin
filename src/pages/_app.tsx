@@ -55,7 +55,6 @@ export default function App(props: MyAppProps & { colorScheme: ColorScheme }) {
     streamAuthUserAdmin();
   }, [isInitialized]);
 
-  if (!isInitialized) return <div></div>;
 
   return (
     <>
