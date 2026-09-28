@@ -37,3 +37,7 @@ env files
 
 # storybook
 storybook-static
+
+# Test & verification scripts
+test_*.js
+scripts/
